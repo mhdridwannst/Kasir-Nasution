@@ -7,7 +7,8 @@ Aplikasi bisa diakses di: https://vercel.app
 
 ### Akun Demo
 Gunakan akun ini untuk mencoba fitur dashboard dan transaksi tanpa register baru:
--ID Toko: manabusi
+
+-ID Toko: Toko Kelontong
 - Email: ridwan@gmail.com
 - Password: Nasution123
 
