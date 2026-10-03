@@ -1,9 +1,12 @@
-# Kasir Nasution - Inventory & POS System
+   # Kasir Nasution - Inventory & POS System
 
 Aplikasi kasir (Point of Sale) dan manajemen stok barang berbasis web dengan arsitektur full-stack. Sudah mendukung fitur multi-tenant untuk pemisahan data antar toko.
 
 ## Live Link
 Aplikasi bisa diakses di: https://vercel.app
+
+## Preview Aplikasi
+
 
 ### Akun Demo
 Gunakan akun ini untuk mencoba fitur dashboard dan transaksi tanpa register baru:
