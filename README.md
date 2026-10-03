@@ -7,6 +7,28 @@ Aplikasi bisa diakses di: https://vercel.app
 
 ## Preview Aplikasi
 
+<details>
+  <summary>Klik untuk melihat Screenshot Website</summary>
+
+   ### Halaman Login
+  ![Login](login.png)
+  
+  ### Dashboard Utama
+  ![Dashboard](dashboard.png)
+
+  ### Terminal Kasir / POS
+  ![Kasir](kasir.png)
+
+  ### Manajemen Produk & Stok
+  ![Produk](produk.png)
+
+  ### Riwayat Transaksi
+  ![Riwayat](riwayat.png)
+
+
+</details>
+
+
 
 ### Akun Demo
 Gunakan akun ini untuk mencoba fitur dashboard dan transaksi tanpa register baru:
