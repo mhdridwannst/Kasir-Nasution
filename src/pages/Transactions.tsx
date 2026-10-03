@@ -19,6 +19,7 @@ import {
   Banknote,
   Building,
   CheckCircle2,
+  Download,
 } from 'lucide-react';
 
 export const Transactions: React.FC = () => {
@@ -66,44 +67,111 @@ export const Transactions: React.FC = () => {
     });
   }, [transactions, searchInvoice, selectedMethod]);
 
+  // Aggregate metrics from filtered data
+  const totalRevenue = useMemo(() => {
+    return filteredTransactions.reduce((sum, t) => sum + Number(t.totalAmount), 0);
+  }, [filteredTransactions]);
+
+  const averageTicket = useMemo(() => {
+    if (filteredTransactions.length === 0) return 0;
+    return totalRevenue / filteredTransactions.length;
+  }, [filteredTransactions, totalRevenue]);
+
   const handleOpenDetail = (trx: Transaction) => {
     setSelectedTrx(trx);
     setIsDetailOpen(true);
+  };
+
+  // Export to CSV / Excel
+  const handleExportCSV = () => {
+    if (filteredTransactions.length === 0) {
+      alert('Tidak ada data transaksi untuk diekspor.');
+      return;
+    }
+
+    const headers = [
+      'No. Invoice',
+      'Tanggal & Waktu',
+      'Kasir',
+      'Metode Bayar',
+      'Rincian Produk (Item x Qty)',
+      'Subtotal',
+      'Diskon',
+      'Pajak',
+      'Total Penjualan',
+    ];
+
+    const rows = filteredTransactions.map((trx) => {
+      const itemsSummary = (trx.details || [])
+        .map((d) => `${d.product?.name || 'Item'} (${d.quantity}x)`)
+        .join(' | ');
+
+      const subtotalCalc = (trx.details || []).reduce(
+        (sum, d) => sum + Number(d.subtotal),
+        0
+      );
+
+      return [
+        `"${trx.invoiceNumber}"`,
+        `"${formatDateTime(trx.transactionDate)}"`,
+        `"${trx.cashier?.fullName || trx.cashier?.email || 'Staff'}"`,
+        `"${trx.paymentMethod.toUpperCase()}"`,
+        `"${itemsSummary}"`,
+        subtotalCalc,
+        trx.discountAmount || 0,
+        trx.taxAmount || 0,
+        trx.totalAmount,
+      ];
+    });
+
+    const csvContent =
+      '\uFEFF' + // UTF-8 BOM for Excel
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `laporan-penjualan-nexpos-${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getMethodBadge = (method: string) => {
     switch (method.toLowerCase()) {
       case 'cash':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
             <Banknote className="w-3 h-3 text-emerald-600" />
             <span>Tunai</span>
           </span>
         );
       case 'qris':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
             <QrCode className="w-3 h-3 text-blue-600" />
             <span>QRIS</span>
           </span>
         );
       case 'debit':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800">
             <CreditCard className="w-3 h-3 text-purple-600" />
             <span>Debit</span>
           </span>
         );
       case 'transfer':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
             <Building className="w-3 h-3 text-amber-600" />
             <span>Transfer</span>
           </span>
         );
       default:
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 capitalize">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 capitalize">
             {method}
           </span>
         );
@@ -111,31 +179,83 @@ export const Transactions: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 antialiased">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
             <Receipt className="w-6 h-6 text-slate-800" />
             <span>Riwayat Transaksi Penjualan</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Daftar seluruh nota penjualan, status pembayaran, dan faktur kasir.
+            Rekap seluruh nota kasir, faktur digital, dan laporan omzet per metode bayar.
           </p>
         </div>
 
-        <button
-          onClick={loadTransactions}
-          disabled={loading}
-          className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors self-start sm:self-auto"
-          title="Muat Ulang Data"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={loadTransactions}
+            disabled={loading}
+            className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            title="Muat Ulang Data"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+
+          {/* Export CSV Button */}
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-sm transition-all"
+            title="Download file CSV / Excel"
+          >
+            <Download className="w-4 h-4" />
+            <span>Ekspor Laporan (Excel)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Aggregate KPI Summary Banner */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            Total Omzet Terpilih
+          </span>
+          <p className="text-2xl font-black text-slate-900 mt-1 tabular-nums">
+            {formatRupiah(totalRevenue)}
+          </p>
+          <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">
+            {filteredTransactions.length} nota berhasil
+          </span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            Total Transaksi
+          </span>
+          <p className="text-2xl font-black text-slate-900 mt-1 tabular-nums">
+            {filteredTransactions.length}{' '}
+            <span className="text-sm font-normal text-slate-400">transaksi</span>
+          </p>
+          <span className="text-[11px] text-slate-400 font-medium mt-1 block">
+            Tersimpan dalam database
+          </span>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            Rata-rata per Nota (AOV)
+          </span>
+          <p className="text-2xl font-black text-slate-900 mt-1 tabular-nums">
+            {formatRupiah(averageTicket)}
+          </p>
+          <span className="text-[11px] text-blue-600 font-semibold mt-1 block">
+            Nilai rata-rata keranjang
+          </span>
+        </div>
       </div>
 
       {errorMsg && (
-        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold flex items-center justify-between">
           <span>{errorMsg}</span>
           <button onClick={loadTransactions} className="underline text-red-900">
             Coba lagi
@@ -144,7 +264,7 @@ export const Transactions: React.FC = () => {
       )}
 
       {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row gap-3 items-center justify-between">
         {/* Search Input */}
         <div className="relative w-full md:w-80">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -164,7 +284,7 @@ export const Transactions: React.FC = () => {
           <Filter className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
           <button
             onClick={() => setSelectedMethod('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 ${
               selectedMethod === 'all'
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -176,7 +296,7 @@ export const Transactions: React.FC = () => {
             <button
               key={m}
               onClick={() => setSelectedMethod(m)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase transition-colors shrink-0 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-colors shrink-0 ${
                 selectedMethod === m
                   ? 'bg-slate-900 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -189,10 +309,10 @@ export const Transactions: React.FC = () => {
       </div>
 
       {/* Transactions Table Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-700">
-            <thead className="bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
               <tr>
                 <th scope="col" className="px-5 py-3.5">No. Invoice</th>
                 <th scope="col" className="px-5 py-3.5">Tanggal & Waktu</th>
@@ -217,58 +337,58 @@ export const Transactions: React.FC = () => {
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-slate-400">
                     <Receipt className="w-10 h-10 mx-auto text-slate-300 mb-2 stroke-1" />
-                    <p className="font-medium text-slate-700">Belum ada transaksi</p>
+                    <p className="font-bold text-slate-700">Belum ada transaksi</p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {searchInvoice || selectedMethod !== 'all'
-                        ? 'Tidak ada transaksi yang cocok dengan filter.'
+                        ? 'Tidak ada transaksi yang cocok dengan filter pencarian.'
                         : 'Lakukan penjualan pertama melalui halaman Kasir (POS).'}
                     </p>
                   </td>
                 </tr>
               ) : (
                 filteredTransactions.map((trx) => (
-                  <tr key={trx.id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr key={trx.id} className="hover:bg-slate-50/70 transition-colors">
                     {/* Invoice */}
-                    <td className="px-5 py-4 font-mono font-bold text-slate-900">
+                    <td className="px-5 py-3.5 font-mono font-bold text-slate-900">
                       {trx.invoiceNumber}
                     </td>
 
                     {/* Date */}
-                    <td className="px-5 py-4 text-xs text-slate-500">
+                    <td className="px-5 py-3.5 text-xs text-slate-500">
                       {formatDateTime(trx.transactionDate)}
                     </td>
 
                     {/* Cashier */}
-                    <td className="px-5 py-4 text-xs font-medium text-slate-700">
+                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-700">
                       {trx.cashier?.fullName || trx.cashier?.email?.split('@')[0] || 'Kasir'}
                     </td>
 
                     {/* Method */}
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3.5">
                       {getMethodBadge(trx.paymentMethod)}
                     </td>
 
                     {/* Total Amount */}
-                    <td className="px-5 py-4 font-extrabold text-slate-900">
+                    <td className="px-5 py-3.5 font-black text-slate-900 tabular-nums">
                       {formatRupiah(trx.totalAmount)}
                     </td>
 
                     {/* Status */}
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Selesai</span>
                       </span>
                     </td>
 
                     {/* Actions */}
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-5 py-3.5 text-right">
                       <button
                         onClick={() => handleOpenDetail(trx)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>Detail</span>
+                        <span>Detail & Cetak</span>
                       </button>
                     </td>
                   </tr>
@@ -279,85 +399,83 @@ export const Transactions: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal Detail / Struk Invoice */}
+      {/* Modal Detail & Cetak Ulang Nota (Thermal Compatible) */}
       {isDetailOpen && selectedTrx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 my-6">
-            <div className="flex items-center justify-between pb-4 border-b border-dashed border-slate-300">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">Faktur Penjualan</h3>
-                <p className="text-xs text-slate-400 font-mono mt-0.5">{selectedTrx.invoiceNumber}</p>
+            {/* The printable container */}
+            <div id="thermal-receipt-printable">
+              <div className="text-center pb-3 border-b border-dashed border-slate-400 relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDetailOpen(false)}
+                  className="no-print absolute right-0 top-0 text-slate-400 hover:text-slate-600 p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <h3 className="font-black text-slate-900 text-base uppercase">Faktur Penjualan</h3>
+                <div className="mt-1 text-[10px] text-slate-500 font-mono">
+                  <p>No: {selectedTrx.invoiceNumber}</p>
+                  <p>{formatDateTime(selectedTrx.transactionDate)}</p>
+                  <p>Kasir: {selectedTrx.cashier?.fullName || selectedTrx.cashier?.email || 'Kasir'}</p>
+                </div>
               </div>
-              <button
-                onClick={() => setIsDetailOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Info Metadata */}
-            <div className="py-3 border-b border-dashed border-slate-300 text-xs font-mono space-y-1">
-              <div className="flex justify-between text-slate-600">
-                <span>Waktu:</span>
-                <span>{formatDateTime(selectedTrx.transactionDate)}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Kasir:</span>
-                <span>{selectedTrx.cashier?.fullName || selectedTrx.cashier?.email || 'Kasir'}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Metode:</span>
-                <span className="uppercase font-semibold text-slate-900">{selectedTrx.paymentMethod}</span>
-              </div>
-            </div>
-
-            {/* Items */}
-            <div className="py-3 border-b border-dashed border-slate-300 space-y-2 text-xs font-mono max-h-52 overflow-y-auto">
-              {selectedTrx.details?.map((detail, idx) => (
-                <div key={idx} className="flex justify-between items-start">
-                  <div>
-                    <p className="font-bold text-slate-900">{detail.product?.name || 'Produk'}</p>
-                    <p className="text-slate-500 text-[11px]">
-                      {detail.quantity} x {formatRupiah(detail.unitPrice)}
-                    </p>
+              {/* Items */}
+              <div className="py-3 border-b border-dashed border-slate-400 space-y-1.5 text-xs font-mono max-h-52 overflow-y-auto">
+                {selectedTrx.details?.map((detail, idx) => (
+                  <div key={idx} className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-slate-900">{detail.product?.name || 'Produk'}</p>
+                      <p className="text-slate-500 text-[10px]">
+                        {detail.quantity} x {formatRupiah(detail.unitPrice)}
+                      </p>
+                    </div>
+                    <span className="font-bold text-slate-900 shrink-0 tabular-nums">
+                      {formatRupiah(detail.subtotal)}
+                    </span>
                   </div>
-                  <span className="font-semibold text-slate-900 shrink-0">
-                    {formatRupiah(detail.subtotal)}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Totals */}
-            <div className="py-3 border-b border-dashed border-slate-300 text-xs font-mono space-y-1">
-              {Number(selectedTrx.discountAmount) > 0 && (
-                <div className="flex justify-between text-emerald-600">
-                  <span>Diskon:</span>
-                  <span>-{formatRupiah(selectedTrx.discountAmount)}</span>
+              {/* Totals */}
+              <div className="py-2.5 border-b border-dashed border-slate-400 text-xs font-mono space-y-1">
+                {Number(selectedTrx.discountAmount) > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Diskon:</span>
+                    <span className="tabular-nums">-{formatRupiah(selectedTrx.discountAmount)}</span>
+                  </div>
+                )}
+                {Number(selectedTrx.taxAmount) > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Pajak:</span>
+                    <span className="tabular-nums">+{formatRupiah(selectedTrx.taxAmount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-black text-sm text-slate-900 pt-1 border-t border-slate-300">
+                  <span>TOTAL:</span>
+                  <span className="tabular-nums">{formatRupiah(selectedTrx.totalAmount)}</span>
                 </div>
-              )}
-              {Number(selectedTrx.taxAmount) > 0 && (
-                <div className="flex justify-between text-slate-600">
-                  <span>Pajak:</span>
-                  <span>+{formatRupiah(selectedTrx.taxAmount)}</span>
+                <div className="flex justify-between text-slate-600 pt-0.5">
+                  <span className="uppercase">Metode: {selectedTrx.paymentMethod}</span>
+                  <span className="font-bold tabular-nums">{formatRupiah(selectedTrx.totalAmount)}</span>
                 </div>
-              )}
-              <div className="flex justify-between font-extrabold text-sm text-slate-900 pt-1">
-                <span>TOTAL:</span>
-                <span>{formatRupiah(selectedTrx.totalAmount)}</span>
+              </div>
+
+              <div className="text-center pt-2 text-[10px] text-slate-400">
+                <p>Salinan Struk Resmi NexPOS</p>
               </div>
             </div>
 
-            {/* Print & Close */}
-            <div className="flex items-center gap-2 mt-5">
+            {/* Print & Close (No Print) */}
+            <div className="no-print flex items-center gap-2 mt-5">
               <button
                 type="button"
                 onClick={() => window.print()}
                 className="w-1/2 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Printer className="w-4 h-4" />
-                <span>Cetak Ulang</span>
+                <span>Cetak Nota</span>
               </button>
               <button
                 type="button"

@@ -323,6 +323,18 @@ export const deleteProduct = async (id: string): Promise<ApiResponse<{ message: 
   return response.data;
 };
 
+export const restockProduct = async (
+  id: string,
+  quantity: number,
+  outletName = 'Main Outlet'
+): Promise<ApiResponse<{ product: Product; stock: unknown }>> => {
+  const response = await api.post<ApiResponse<{ product: Product; stock: unknown }>>(`/products/${id}/restock`, {
+    quantity,
+    outletName,
+  });
+  return response.data;
+};
+
 // ==========================================
 // Transaction (POS) API Services
 // ==========================================

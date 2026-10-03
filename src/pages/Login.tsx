@@ -63,10 +63,10 @@ export const Login: React.FC = () => {
         {/* Branding Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-900 text-white font-bold text-2xl shadow-lg shadow-slate-900/10 mb-4 ring-4 ring-white">
-            <span>N</span>
+            <span>KN</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Masuk ke NexPOS
+            Masuk ke Kasir-Nasution
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Sistem Kasir & Manajemen Inventaris Multi-Tenant

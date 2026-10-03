@@ -1,1 +1,68 @@
 @import "tailwindcss";
+
+@layer base {
+  /* Tabular numbers across numerical displays for perfect ledger alignment */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Custom sleek scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+/* ========================================================================= */
+/* THERMAL RECEIPT PRINTING STYLES (Supports POS-58 and POS-80 Printers)    */
+/* ========================================================================= */
+@media print {
+  /* Hide all app chrome, sidebars, headers, modals overlay background */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the thermal receipt container */
+  #thermal-receipt-printable,
+  #thermal-receipt-printable * {
+    visibility: visible;
+  }
+
+  #thermal-receipt-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 10pt !important;
+    line-height: 1.25 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force page size to auto / receipt width */
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  /* Hide print buttons and close controls on printed output */
+  .no-print {
+    display: none !important;
+  }
+}

@@ -103,7 +103,7 @@ export const Register: React.FC = () => {
             Daftarkan Toko Baru
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Mulai kelola sistem POS & Inventaris NexPOS Anda sekarang.
+            Mulai kelola sistem POS & Inventaris ke Kasir Nasution Anda sekarang.
           </p>
         </div>
 

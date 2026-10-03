@@ -34,7 +34,7 @@ export const AppLayout: React.FC = () => {
     },
     {
       to: '/pos',
-      label: 'Kasir (POS)',
+      label: 'Kasir',
       icon: ShoppingCart,
     },
     {
@@ -58,7 +58,7 @@ export const AppLayout: React.FC = () => {
             N
           </div>
           <div>
-            <span className="font-bold text-sm tracking-tight block">NexPOS</span>
+            <span className="font-bold text-sm tracking-tight block">One-POS</span>
             <span className="text-[10px] text-slate-400 capitalize block leading-none">
               {user?.tenantSlug || 'Toko'}
             </span>
@@ -84,10 +84,10 @@ export const AppLayout: React.FC = () => {
         <div className="p-5 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white font-extrabold flex items-center justify-center text-lg shadow-md shadow-emerald-500/20">
-              N
+              KN
             </div>
             <div>
-              <h1 className="font-bold text-base text-white tracking-tight leading-tight">NexPOS</h1>
+              <h1 className="font-bold text-base text-white tracking-tight leading-tight">Kasir Nasution</h1>
               <p className="text-[11px] text-slate-400">Inventory & POS System</p>
             </div>
           </div>
