@@ -10,7 +10,7 @@ Gunakan akun ini untuk mencoba fitur dashboard dan transaksi tanpa register baru
 
 - Id: toko-kelontong
 - Email: admin@gmail.com
-- Password: admin
+- Password: admin123
 
 ## Tech Stack
 - Frontend: React.js, Vite, TypeScript, Tailwind CSS (Hosted on Vercel)
