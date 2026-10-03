@@ -8,9 +8,9 @@ Aplikasi bisa diakses di: https://vercel.app
 ### Akun Demo
 Gunakan akun ini untuk mencoba fitur dashboard dan transaksi tanpa register baru:
 
-- Id: Toko Kelontong
-- Email: ridwan@gmail.com
-- Password: Nasution123
+- Id: toko-kelontong
+- Email: admin@gmail.com
+- Password: admin
 
 ## Tech Stack
 - Frontend: React.js, Vite, TypeScript, Tailwind CSS (Hosted on Vercel)
