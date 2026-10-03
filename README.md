@@ -7,8 +7,9 @@ Aplikasi bisa diakses di: https://vercel.app
 
 ### Akun Demo
 Gunakan akun ini untuk mencoba fitur dashboard dan transaksi tanpa register baru:
-- Email: [Isi email login di sini]
-- Password: [Isi password di sini]
+-ID Toko: manabusi
+- Email: ridwan@gmail.com
+- Password: Nasution123
 
 ## Tech Stack
 - Frontend: React.js, Vite, TypeScript, Tailwind CSS (Hosted on Vercel)
