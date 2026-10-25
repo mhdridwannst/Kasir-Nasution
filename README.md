@@ -3,7 +3,7 @@
 Aplikasi kasir (Point of Sale) dan manajemen stok barang berbasis web dengan arsitektur full-stack. Sudah mendukung fitur multi-tenant untuk pemisahan data antar toko.
 
 ## Live Link
-Aplikasi bisa diakses di: https://vercel.app
+Aplikasi bisa diakses di: kasir-nasution.vercel.app
 
 ## Preview Aplikasi
 
